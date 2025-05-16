@@ -72,7 +72,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Text(
-                              "Hi Daniel, I’m Fin 😎",
+                              "Hi Daniel, I'm Fin 😎",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyLarge!
@@ -97,7 +97,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Text(
-                              "I’m here to help your personal\nfinance stuff easier 💰",
+                              "Estoy aquí para ayudarte a hacer más fácil\nla gestión de tus finanzas personales 💰",
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyLarge!
