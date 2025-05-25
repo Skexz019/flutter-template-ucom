@@ -19,5 +19,19 @@
     "modelo": "Fiesta",
     "chasis": "CH987654",
     "clienteId": "cliente_1"
+  },
+  {
+    "chapa": "SUP001",
+    "marca": "Toyota",
+    "modelo": "Supra",
+    "chasis": "CH789012",
+    "clienteId": "cliente_1"
+  },
+  {
+    "chapa": "BUG001",
+    "marca": "Bugatti",
+    "modelo": "Chiron",
+    "chasis": "CH345678",
+    "clienteId": "cliente_1"
   }
 ]
