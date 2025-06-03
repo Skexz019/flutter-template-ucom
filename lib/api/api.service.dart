@@ -37,4 +37,15 @@ class ApiService {
     lugar['estado'] = estado;
     await _db.update("lugares.json", "codigoLugar", codigoLugar, lugar);
   }
+
+  // Crear un nuevo pago
+  Future<Map<String, dynamic>> crearPago(Map<String, dynamic> pago) async {
+    await _db.add("pagos.json", pago);
+    return pago;
+  }
+
+  // Actualizar una reserva
+  Future<void> actualizarReserva(String codigoReserva, Map<String, dynamic> reserva) async {
+    await _db.update("reservas.json", "codigoReserva", codigoReserva, reserva);
+  }
 } 

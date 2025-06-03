@@ -111,7 +111,7 @@ class _TabScreenState extends State<TabScreen> {
                               .withOpacity(0.4),
                 ),
               ),
-              label: "Card"),
+              label: "Vehiculos"),
           BottomNavigationBarItem(
               icon: SizedBox(
                 height: 20,

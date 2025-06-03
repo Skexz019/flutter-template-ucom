@@ -89,7 +89,7 @@ class ReservaScreen extends StatelessWidget {
                             lugar.codigoLugar,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: lugar.estado == "reservado"
+                              color: lugar.estado == "RESERVADO"
                                   ? Colors.white
                                   : Colors.black87,
                             ),
@@ -177,29 +177,93 @@ class ReservaScreen extends StatelessWidget {
                 const Text("Duración rápida",
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [1, 2, 4, 6, 8].map((horas) {
-                    final seleccionada =
-                        controller.duracionSeleccionada.value == horas;
-                    return ChoiceChip(
-                      label: Text("$horas h"),
-                      selected: seleccionada,
-                      selectedColor: Theme.of(context).colorScheme.primary,
-                      onSelected: (_) {
-                        controller.duracionSeleccionada.value = horas;
-                        final inicio =
-                            controller.horarioInicio.value ?? DateTime.now();
-                        controller.horarioInicio.value = inicio;
-                        controller.horarioSalida.value =
-                            inicio.add(Duration(hours: horas));
-                      },
-                    );
-                  }).toList(),
+                _SelectionCard(
+                  icon: Icons.access_time,
+                  title: "Duración",
+                  child: Obx(() => Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text("Horas", style: TextStyle(fontSize: 16)),
+                          Switch(
+                            value: controller.esPorDias.value,
+                            onChanged: (value) {
+                              controller.esPorDias.value = value;
+                              controller.duracionSeleccionada.value = value ? 1 : 1;
+                              final inicio = controller.horarioInicio.value ?? DateTime.now();
+                              controller.horarioInicio.value = inicio;
+                              controller.horarioSalida.value = inicio.add(
+                                value ? const Duration(days: 1) : const Duration(hours: 1)
+                              );
+                            },
+                          ),
+                          const Text("Días", style: TextStyle(fontSize: 16)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Slider(
+                        value: ((controller.duracionSeleccionada.value == null || controller.duracionSeleccionada.value! < 1) ? 1 : controller.duracionSeleccionada.value!.toDouble()),
+                        min: 1,
+                        max: controller.esPorDias.value ? 7 : 8,
+                        divisions: controller.esPorDias.value ? 6 : 7,
+                        label: "${(controller.duracionSeleccionada.value == null || controller.duracionSeleccionada.value! < 1) ? 1 : controller.duracionSeleccionada.value} ${controller.esPorDias.value ? 'd' : 'h'}",
+                        onChanged: (val) {
+                          controller.duracionSeleccionada.value = val.round();
+                          final inicio = controller.horarioInicio.value ?? DateTime.now();
+                          controller.horarioInicio.value = inicio;
+                          controller.horarioSalida.value = inicio.add(
+                            controller.esPorDias.value 
+                              ? Duration(days: val.round())
+                              : Duration(hours: val.round())
+                          );
+                        },
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: (controller.esPorDias.value 
+                          ? [1, 2, 3, 5, 7]
+                          : [1, 2, 4, 6, 8]
+                        ).map((d) => GestureDetector(
+                          onTap: () {
+                            controller.duracionSeleccionada.value = d;
+                            final inicio = controller.horarioInicio.value ?? DateTime.now();
+                            controller.horarioInicio.value = inicio;
+                            controller.horarioSalida.value = inicio.add(
+                              controller.esPorDias.value 
+                                ? Duration(days: d)
+                                : Duration(hours: d)
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: (controller.duracionSeleccionada.value == d)
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Text(
+                              "${d}${controller.esPorDias.value ? 'd' : 'h'}", 
+                              style: TextStyle(
+                                color: (controller.duracionSeleccionada.value == d)
+                                    ? Colors.white
+                                    : Colors.black87,
+                              )
+                            ),
+                          ),
+                        )).toList(),
+                      ),
+                    ],
+                  )),
                 ),
+                const SizedBox(height: 20),
                 Obx(() {
                   final inicio = controller.horarioInicio.value;
                   final salida = controller.horarioSalida.value;
+                  final auto = controller.autoSeleccionado.value;
+                  final lugar = controller.lugarSeleccionado.value;
 
                   if (inicio == null || salida == null) return const SizedBox();
 
@@ -207,18 +271,91 @@ class ReservaScreen extends StatelessWidget {
                   final horas = minutos / 60;
                   final monto = (horas * 10000).round();
 
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
-                    child: Text(
-                      "Monto estimado: ₲${UtilesApp.formatearGuaranies(monto)}",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                  return Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.receipt_long, 
+                                color: Theme.of(context).colorScheme.primary
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                "Resumen de Reserva",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 24),
+                          if (auto != null) ...[
+                            _ResumenItem(
+                              icon: Icons.directions_car,
+                              label: "Vehículo",
+                              value: "${auto.marca} ${auto.modelo} (${auto.chapa})",
+                            ),
+                          ],
+                          if (lugar != null) ...[
+                            _ResumenItem(
+                              icon: Icons.local_parking,
+                              label: "Lugar",
+                              value: lugar.codigoLugar,
+                            ),
+                          ],
+                          _ResumenItem(
+                            icon: Icons.access_time,
+                            label: "Duración",
+                            value: "${controller.esPorDias.value ? 'Días' : 'Horas'}: ${controller.duracionSeleccionada.value ?? 1}",
+                          ),
+                          _ResumenItem(
+                            icon: Icons.calendar_today,
+                            label: "Inicio",
+                            value: "${UtilesApp.formatearFechaDdMMAaaa(inicio)} ${TimeOfDay.fromDateTime(inicio).format(context)}",
+                          ),
+                          _ResumenItem(
+                            icon: Icons.calendar_today,
+                            label: "Fin",
+                            value: "${UtilesApp.formatearFechaDdMMAaaa(salida)} ${TimeOfDay.fromDateTime(salida).format(context)}",
+                          ),
+                          const Divider(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                "Monto estimado:",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                "₲${UtilesApp.formatearGuaranies(monto)}",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 }),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
+                  child: Obx(() => ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       foregroundColor: Colors.white,
@@ -227,7 +364,7 @@ class ReservaScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () async {
+                    onPressed: controller.isReserving.value ? null : () async {
                       final confirmada = await controller.confirmarReserva();
 
                       if (confirmada) {
@@ -237,7 +374,6 @@ class ReservaScreen extends StatelessWidget {
                           snackPosition: SnackPosition.BOTTOM,
                         );
 
-                        // Esperá un poco para que el snackbar se muestre
                         await Future.delayed(
                             const Duration(milliseconds: 2000));
 
@@ -252,16 +388,102 @@ class ReservaScreen extends StatelessWidget {
                         );
                       }
                     },
-                    child: const Text(
-                      "Confirmar Reserva",
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
+                    child: controller.isReserving.value
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            "Confirmar Reserva",
+                            style: TextStyle(fontSize: 16),
+                          ),
+                  )),
                 ),
               ],
             );
           }),
         ),
+      ),
+    );
+  }
+}
+
+class _SelectionCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Widget child;
+
+  const _SelectionCard({
+    Key? key,
+    required this.icon,
+    required this.title,
+    required this.child,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon),
+                const SizedBox(width: 10),
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ResumenItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _ResumenItem({
+    Key? key,
+    required this.icon,
+    required this.label,
+    required this.value,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey[600]),
+          const SizedBox(width: 8),
+          Text(
+            "$label:",
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:finpay/api/local.db.service.dart';
+import 'package:finpay/api/api.service.dart';
 import 'package:finpay/config/images.dart';
 import 'package:finpay/config/textstyle.dart';
 import 'package:finpay/model/sitema_reservas.dart';
@@ -9,15 +10,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class HomeController extends GetxController {
+  final api = ApiService();
   List<TransactionModel> transactionList = List<TransactionModel>.empty().obs;
   RxBool isWeek = true.obs;
   RxBool isMonth = false.obs;
   RxBool isYear = false.obs;
   RxBool isAdd = false.obs;
   RxList<Pago> pagosPrevios = <Pago>[].obs;
+  RxList<Reserva> todasLasReservas = <Reserva>[].obs;
 
   customInit() async {
     cargarPagosPrevios();
+    cargarTodasLasReservas();
     isWeek.value = true;
     isMonth.value = false;
     isYear.value = false;
@@ -62,5 +66,14 @@ class HomeController extends GetxController {
     final data = await db.getAll("pagos.json");
 
     pagosPrevios.value = data.map((json) => Pago.fromJson(json)).toList();
+  }
+
+  Future<void> cargarTodasLasReservas() async {
+    try {
+      final reservas = await api.getReservas();
+      todasLasReservas.value = reservas.map((json) => Reserva.fromJson(json)).toList();
+    } catch (e) {
+      print("Error al cargar todas las reservas: $e");
+    }
   }
 }

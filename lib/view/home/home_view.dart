@@ -12,6 +12,7 @@ import 'package:finpay/view/home/widget/circle_card.dart';
 import 'package:finpay/view/home/widget/custom_card.dart';
 import 'package:finpay/view/home/widget/transaction_list.dart';
 import 'package:finpay/view/reservas/reservas_screen.dart';
+import 'package:finpay/view/reservas/pagos_pendientes_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
@@ -40,14 +41,14 @@ class HomeView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Good morning",
+                      "Buenos días",
                       style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                             fontWeight: FontWeight.w400,
                             color: Theme.of(context).textTheme.bodySmall!.color,
                           ),
                     ),
                     Text(
-                      "Good morning",
+                      "Bienvenido",
                       style: Theme.of(context).textTheme.titleLarge!.copyWith(
                             fontWeight: FontWeight.w700,
                             fontSize: 24,
@@ -199,7 +200,7 @@ class HomeView extends StatelessWidget {
                       hoverColor: Colors.transparent,
                       splashColor: Colors.transparent,
                       onTap: () {
-                        Get.to(const TopUpSCreen(),
+                        Get.to(() => PagosPendientesScreen(),
                             transition: Transition.downToUp,
                             duration: const Duration(milliseconds: 500));
                       },
@@ -216,7 +217,7 @@ class HomeView extends StatelessWidget {
                       onTap: () {},
                       child: circleCard(
                         image: DefaultImages.withdraw,
-                        title: "Withdraw",
+                        title: "Retirar",
                       ),
                     ),
                     InkWell(
@@ -228,9 +229,7 @@ class HomeView extends StatelessWidget {
                         Get.to(
                           () => ReservaScreen(),
                           binding: BindingsBuilder(() {
-                            Get.delete<
-                                ReservaController>(); // 🔥 elimina instancia previa
-
+                            Get.delete<ReservaController>();
                             Get.create(() => ReservaController());
                           }),
                           transition: Transition.downToUp,
@@ -285,25 +284,52 @@ class HomeView extends StatelessWidget {
                         const SizedBox(height: 20),
                         Obx(() {
                           return Column(
-                            children: homeController.pagosPrevios.map((pago) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 10),
-                                child: ListTile(
-                                  leading: const Icon(Icons.payments_outlined),
-                                  title: Text(
-                                      "Reserva: ${pago.codigoReservaAsociada}"),
-                                  subtitle: Text(
-                                      "Fecha: ${UtilesApp.formatearFechaDdMMAaaa(pago.fechaPago)}"),
-                                  trailing: Text(
-                                    "- ${UtilesApp.formatearGuaranies(pago.montoPagado)}",
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    "Historial de Reservas",
                                     style: TextStyle(
-                                        color: Colors.red,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
+                                  TextButton.icon(
+                                    onPressed: () {
+                                      Get.to(() => PagosPendientesScreen());
+                                    },
+                                    icon: const Icon(Icons.payment),
+                                    label: const Text("Ver solo Pendientes"),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              ...homeController.todasLasReservas.map((reserva) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 10),
+                                  child: ListTile(
+                                    leading: const Icon(Icons.receipt_long),
+                                    title: Text(
+                                        "Reserva: ${reserva.codigoReserva}"),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("Fecha Inicio: ${UtilesApp.formatearFechaDdMMAaaa(reserva.horarioInicio)}"),
+                                        Text("Estado Pago: ${reserva.estadoPago}"),
+                                      ],
+                                    ),
+                                    trailing: Text(
+                                      "₲${UtilesApp.formatearGuaranies(reserva.monto)}",
+                                      style: TextStyle(
+                                          color: reserva.estadoPago == "PAGADO" ? Colors.green : Colors.orange,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ],
                           );
                         }),
                       ],

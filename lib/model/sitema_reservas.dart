@@ -120,7 +120,8 @@ class Reserva {
   DateTime horarioSalida;
   double monto;
   String estadoReserva;
-  String chapaAuto; // solo la chapa
+  String chapaAuto;
+  String estadoPago; // PENDIENTE, PAGADO
 
   Reserva({
     required this.codigoReserva,
@@ -129,6 +130,7 @@ class Reserva {
     required this.monto,
     required this.estadoReserva,
     required this.chapaAuto,
+    this.estadoPago = "PENDIENTE",
   });
 
   factory Reserva.fromJson(Map<String, dynamic> json) => Reserva(
@@ -138,6 +140,7 @@ class Reserva {
         monto: json['monto'].toDouble(),
         estadoReserva: json['estadoReserva'],
         chapaAuto: json['chapaAuto'] ?? '',
+        estadoPago: json['estadoPago'] ?? "PENDIENTE",
       );
 
   Map<String, dynamic> toJson() => {
@@ -147,6 +150,7 @@ class Reserva {
         'monto': monto,
         'estadoReserva': estadoReserva,
         'chapaAuto': chapaAuto,
+        'estadoPago': estadoPago,
       };
 }
 
