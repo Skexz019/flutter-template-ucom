@@ -33,19 +33,36 @@ class PagosPendientesScreen extends StatelessWidget {
               key: Key(reserva.codigoReserva),
               direction: DismissDirection.horizontal,
               background: Container(
-                color: Colors.red,
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: const Icon(Icons.cancel, color: Colors.white),
-              ),
-              secondaryBackground: Container(
                 color: Colors.green,
                 alignment: Alignment.centerLeft,
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: const Icon(Icons.payment, color: Colors.white),
               ),
+              secondaryBackground: Container(
+                color: Colors.red,
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: const Icon(Icons.cancel, color: Colors.white),
+              ),
               confirmDismiss: (direction) async {
-                if (direction == DismissDirection.endToStart) {
+                if (direction == DismissDirection.startToEnd) {
+                  return await Get.dialog<bool>(
+                    AlertDialog(
+                      title: const Text("Confirmar Pago"),
+                      content: Text("¿Está seguro que desea pagar la reserva ${reserva.codigoReserva}?"),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Get.back(result: false),
+                          child: const Text("No"),
+                        ),
+                        TextButton(
+                          onPressed: () => Get.back(result: true),
+                          child: const Text("Sí, Pagar"),
+                        ),
+                      ],
+                    ),
+                  ) ?? false;
+                } else if (direction == DismissDirection.endToStart) {
                   return await Get.dialog<bool>(
                     AlertDialog(
                       title: const Text("Confirmar Cancelación"),
@@ -62,16 +79,11 @@ class PagosPendientesScreen extends StatelessWidget {
                       ],
                     ),
                   ) ?? false;
-                } else if (direction == DismissDirection.startToEnd) {
-                  return true;
                 }
                 return false;
               },
               onDismissed: (direction) async {
-                if (direction == DismissDirection.endToStart) {
-                  controller.reservasPendientes.removeAt(index);
-                  Get.snackbar("Cancelado", "La reserva ${reserva.codigoReserva} ha sido cancelada (funcionalidad pendiente)");
-                } else if (direction == DismissDirection.startToEnd) {
+                if (direction == DismissDirection.startToEnd) {
                   final success = await controller.realizarPago(reserva.codigoReserva);
                   if (success) {
                     Get.snackbar(
@@ -90,6 +102,9 @@ class PagosPendientesScreen extends StatelessWidget {
                       colorText: Colors.red.shade900,
                     );
                   }
+                } else if (direction == DismissDirection.endToStart) {
+                  controller.reservasPendientes.removeAt(index);
+                  Get.snackbar("Cancelado", "La reserva ${reserva.codigoReserva} ha sido cancelada (funcionalidad pendiente)");
                 }
               },
               child: Card(

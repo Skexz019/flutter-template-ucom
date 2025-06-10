@@ -6,6 +6,8 @@ import 'package:finpay/config/images.dart';
 import 'package:finpay/config/textstyle.dart';
 import 'package:finpay/model/sitema_reservas.dart';
 import 'package:finpay/model/transaction_model.dart';
+import 'package:finpay/model/auto_model.dart';
+import 'package:finpay/controller/reserva_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -18,10 +20,18 @@ class HomeController extends GetxController {
   RxBool isAdd = false.obs;
   RxList<Pago> pagosPrevios = <Pago>[].obs;
   RxList<Reserva> todasLasReservas = <Reserva>[].obs;
+  RxList<Vehiculo> vehiculos = <Vehiculo>[].obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    customInit();
+  }
 
   customInit() async {
-    cargarPagosPrevios();
-    cargarTodasLasReservas();
+    await cargarPagosPrevios();
+    await cargarTodasLasReservas();
+    await cargarVehiculos();
     isWeek.value = true;
     isMonth.value = false;
     isYear.value = false;
@@ -62,18 +72,73 @@ class HomeController extends GetxController {
   }
 
   Future<void> cargarPagosPrevios() async {
-    final db = LocalDBService();
-    final data = await db.getAll("pagos.json");
-
-    pagosPrevios.value = data.map((json) => Pago.fromJson(json)).toList();
+    try {
+      final response = await api.getPagosPrevios();
+      if (response != null) {
+        pagosPrevios.value = response;
+      }
+    } catch (e) {
+      print('Error al cargar pagos previos: $e');
+    }
   }
 
   Future<void> cargarTodasLasReservas() async {
     try {
-      final reservas = await api.getReservas();
-      todasLasReservas.value = reservas.map((json) => Reserva.fromJson(json)).toList();
+      final response = await api.getTodasLasReservas();
+      if (response != null) {
+        todasLasReservas.value = response;
+      }
     } catch (e) {
-      print("Error al cargar todas las reservas: $e");
+      print('Error al cargar reservas: $e');
     }
+  }
+
+  Future<void> cargarVehiculos() async {
+    try {
+      final response = await api.getVehiculos();
+      if (response != null) {
+        vehiculos.value = response;
+      }
+    } catch (e) {
+      print('Error al cargar vehículos: $e');
+    }
+  }
+
+  Future<void> agregarVehiculo(Vehiculo vehiculo) async {
+    try {
+      final response = await api.agregarVehiculo(vehiculo);
+      if (response != null) {
+        vehiculos.add(vehiculo);
+        // Actualizar la lista de vehículos en ReservaController si está registrado
+        if (Get.isRegistered<ReservaController>()) {
+          final reservaController = Get.find<ReservaController>();
+          await reservaController.cargarAutosDelCliente();
+        }
+        update();
+      }
+    } catch (e) {
+      print('Error al agregar vehículo: $e');
+    }
+  }
+
+  Future<void> eliminarVehiculo(String chapa) async {
+    try {
+      final response = await api.eliminarVehiculo(chapa);
+      if (response != null) {
+        vehiculos.removeWhere((v) => v.chapa == chapa);
+        update();
+      }
+    } catch (e) {
+      print('Error al eliminar vehículo: $e');
+    }
+  }
+
+  int getPagosDelMes() {
+    final now = DateTime.now();
+    return pagosPrevios.where((pago) => pago.fechaPago.month == now.month).length;
+  }
+
+  int getPagosPendientes() {
+    return todasLasReservas.where((reserva) => reserva.estadoPago == "PENDIENTE").length;
   }
 }

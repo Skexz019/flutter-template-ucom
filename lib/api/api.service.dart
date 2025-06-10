@@ -1,4 +1,6 @@
 import 'package:finpay/api/local.db.service.dart';
+import 'package:finpay/model/auto_model.dart';
+import 'package:finpay/model/sitema_reservas.dart';
 
 class ApiService {
   final LocalDBService _db = LocalDBService();
@@ -14,14 +16,49 @@ class ApiService {
   }
 
   // Obtener todas las reservas
-  Future<List<Map<String, dynamic>>> getReservas() async {
-    return await _db.getAll("reservas.json");
+  Future<List<Reserva>> getTodasLasReservas() async {
+    final reservas = await _db.getAll("reservas.json");
+    return reservas.map((json) => Reserva.fromJson(json)).toList();
+  }
+
+  // Obtener pagos previos
+  Future<List<Pago>> getPagosPrevios() async {
+    final pagos = await _db.getAll("pagos.json");
+    return pagos.map((json) => Pago.fromJson(json)).toList();
+  }
+
+  // Obtener vehículos
+  Future<List<Vehiculo>> getVehiculos() async {
+    final vehiculos = await _db.getAll("autos.json");
+    return vehiculos.map((json) => Vehiculo.fromJson(json)).toList();
+  }
+
+  // Agregar vehículo
+  Future<Vehiculo?> agregarVehiculo(Vehiculo vehiculo) async {
+    try {
+      await _db.add("autos.json", vehiculo.toJson());
+      return vehiculo;
+    } catch (e) {
+      print('Error al agregar vehículo: $e');
+      return null;
+    }
+  }
+
+  // Eliminar vehículo
+  Future<bool> eliminarVehiculo(String chapa) async {
+    try {
+      await _db.delete("autos.json", chapa, "chapa");
+      return true;
+    } catch (e) {
+      print('Error al eliminar vehículo: $e');
+      return false;
+    }
   }
 
   // Obtener autos de un cliente
-  Future<List<Map<String, dynamic>>> getAutosCliente(String clienteId) async {
-    final autos = await _db.getAll("autos.json");
-    return autos.where((auto) => auto['clienteId'] == clienteId).toList();
+  Future<List<Vehiculo>> getAutosCliente(String clienteId) async {
+    final vehiculos = await getVehiculos();
+    return vehiculos.where((v) => v.clienteId == clienteId).toList();
   }
 
   // Crear una nueva reserva
